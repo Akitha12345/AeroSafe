@@ -1,0 +1,111 @@
+//libraries
+#include <DHT.h>
+#include <WiFi.h>
+#include <BlynkSimpleEsp32.h>
+
+//WiFi credentials
+char auth[] = "OKlhvEmerYOPuE3aNSKVkxN8rjHDY4rh";
+char ssid[] = "Akitha's Huawei Nova 7i";
+char pass[] = "12345678";
+
+#define sensor1 34
+#define sensor2 35
+#define sensor3 32
+#define buzzer 2
+#define DHTPIN 23
+#define DHTTYPE DHT11
+
+DHT dht(DHTPIN, DHTTYPE);
+
+//Blynk and LED widgets
+WidgetLED LED1(V1);
+WidgetLED LED2(V2);
+WidgetLED LED3(V3);
+WidgetLED buzzerLED(V4);
+
+void setup() {
+  //serial.begin
+  Serial.begin(9600);
+
+  //Blynk connection and DHT sensor
+  Blynk.begin(auth, ssid, pass, "blynk.cloud", 80);
+  dht.begin();
+
+  // Set buzzer pin as an output
+  pinMode(buzzer, OUTPUT);
+}
+
+//MQ2 gas level
+void MQ2GASLevel() {
+  int value = analogRead(sensor1);
+  value = map(value, 0, 4095, 0, 100);
+
+  // Check if gas level is above 50
+  if (value >= 50) {
+    Blynk.logEvent("mq_2", "Gas Hazard Detected!");
+    digitalWrite(buzzer, HIGH);
+    buzzerLED.on();
+  } else {
+    digitalWrite(buzzer, LOW);
+    buzzerLED.off();
+  }
+
+  // Update Blynk app with gas level
+  LED1.setValue(value);
+}
+
+//MQ7 gas level
+void MQ7GASLevel() {
+  int value = analogRead(sensor2);
+  value = map(value, 0, 4095, 0, 100);
+
+  // Check if gas level is above 50
+  if (value >= 50) {
+    Blynk.logEvent("mq_7", "Gas Hazard Detected!");
+    digitalWrite(buzzer, HIGH);
+    buzzerLED.on();
+  } else {
+    digitalWrite(buzzer, LOW);
+    buzzerLED.off();
+  }
+
+  // Update Blynk app with gas level
+  LED2.setValue(value);
+}
+
+//MQ135 gas level
+void MQ135GASLevel() {
+  int value = analogRead(sensor3);
+  value = map(value, 0, 4095, 0, 100);
+
+  // Check if gas level is above 50
+  if (value >= 50) {
+    Blynk.logEvent("mq_135", "Gas Hazard Detected!");
+    digitalWrite(buzzer, HIGH);
+    buzzerLED.on();
+  } else {
+    digitalWrite(buzzer, LOW);
+    buzzerLED.off();
+  }
+
+  // Update Blynk app with gas level
+  LED3.setValue(value);
+}
+
+void loop() {
+  // Read temperature from DHT sensor
+  int temperature = dht.readTemperature();
+  // Update Blynk app with temperature
+  Blynk.virtualWrite(V0, temperature);
+
+  // Call functions
+  MQ2GASLevel();
+  MQ7GASLevel();
+  MQ135GASLevel();
+
+  // Run Blynk communication
+  Blynk.run();
+
+  
+  delay(100);
+}
